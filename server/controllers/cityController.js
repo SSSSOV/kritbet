@@ -1,34 +1,43 @@
+// server\controllers\cityController.js
 const { City } = require("../models/models");
 const ApiError = require("../error/ApiError");
 
 class CityController {
-    async create(req, res, next) {
-        try {
-            const { name, countryId } = req.body;
-            const city = await City.create({ name, countryId });
-            return res.json(city);
-        } catch (e) {
-            next(ApiError.badRequest(e.message));
-        }
-    }
-    async getAll(req, res) {
-        const { countryId } = req.query;
-        let cities;
+  async create(req, res, next) {
+    try {
+      const { name, countryId } = req.body;
 
-        if (!countryId) {
-            cities = await City.findAll();
-        }
+      if (!name) {
+        return next(ApiError.badRequest("Ошибка создания города: Название не указано!"));
+      }
+      if (!countryId) {
+        return next(ApiError.badRequest("Ошибка создания города: ID страны не указано!"));
+      }
 
-        if (countryId) {
-            cities = await City.findAll({ where: { countryId } });
-        }
+      const city = await City.create({ name, countryId });
+      return res.json(city);
+    } catch (e) {
+      next(ApiError.badRequest(e.message));
+    }
+  }
+  async get(req, res, next) {
+    try {
+      const { id, countryId } = req.query;
 
-        return res.json(cities);
+      let data;
+      if (!id && !countryId) {
+        data = await City.findAll();
+      } else if (id) {
+        data = await City.findOne({ where: { id } });
+      } else if (countryId) {
+        data = await City.findAll({ where: { countryId } });
+      }
+
+      return res.json(data);
+    } catch (e) {
+      next(ApiError.badRequest(e.message));
     }
-    async getOne(req, res) {
-        const { id } = req.params;
-        const city = City.findOne({ where: { id } });
-    }
+  }
 }
 
 module.exports = new CityController();
